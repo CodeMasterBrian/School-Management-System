@@ -198,7 +198,7 @@ def add_subject(request):
     form = SubjectForm(request.POST or None)
     context = {
         'form': form,
-        'page_title': 'Add Subject'
+        'page_title': 'Add Units'
     }
     if request.method == 'POST':
         if form.is_valid():
@@ -274,7 +274,13 @@ def manage_subject(request):
 
 
 def edit_staff(request, staff_id):
-    staff = get_object_or_404(Staff, id=staff_id)
+    try:
+        staff = get_object_or_404(Staff, id=staff_id)
+        user = get_object_or_404(CustomUser, id=staff.admin.id)
+    except Exception as e:
+        messages.error(request, f"Error: {e}")
+        return redirect('some_error_page')  # Redirect to an error page or a safer view
+    
     form = StaffForm(request.POST or None, instance=staff)
     context = {
         'form': form,
@@ -293,12 +299,11 @@ def edit_staff(request, staff_id):
             course = form.cleaned_data.get('course')
             passport = request.FILES.get('profile_pic') or None
             try:
-                user = CustomUser.objects.get(id=staff.admin.id)
                 user.username = username
                 user.email = email
-                if password != None:
+                if password:
                     user.set_password(password)
-                if passport != None:
+                if passport:
                     fs = FileSystemStorage()
                     filename = fs.save(passport.name, passport)
                     passport_url = fs.url(filename)
@@ -313,13 +318,10 @@ def edit_staff(request, staff_id):
                 messages.success(request, "Successfully Updated")
                 return redirect(reverse('edit_staff', args=[staff_id]))
             except Exception as e:
-                messages.error(request, "Could Not Update " + str(e))
+                messages.error(request, f"Could Not Update: {e}")
         else:
-            messages.error(request, "Please fil form properly")
-    else:
-        user = CustomUser.objects.get(id=staff_id)
-        staff = Staff.objects.get(id=user.id)
-        return render(request, "hod_template/edit_staff_template.html", context)
+            messages.error(request, "Please fill the form properly")
+    return render(request, "hod_template/edit_staff_template.html", context)
 
 
 def edit_student(request, student_id):
