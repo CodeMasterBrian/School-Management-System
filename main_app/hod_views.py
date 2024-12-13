@@ -257,6 +257,7 @@ def manage_course(request):
         'page_obj': page_obj,  
         'page_title': 'Manage Courses'
     }
+    
     return render(request, "hod_template/manage_course.html", context)
 
 
